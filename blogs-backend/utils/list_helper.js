@@ -10,7 +10,20 @@ const totalLikes = (blogs) => {
     return blogs.reduce(reducer, 0);
 };
 
+const favoriteBlog = (blogs) => {
+    if (blogs && blogs.length > 0) {
+        blogs.sort((a, b) => {
+            return (b.likes - a.likes);
+        });
+
+        return blogs[0];
+    }
+
+    return null;
+};
+
 module.exports = {
     dummy,
-    totalLikes
+    totalLikes,
+    favoriteBlog
 };
