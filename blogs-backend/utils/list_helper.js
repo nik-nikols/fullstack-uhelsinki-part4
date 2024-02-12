@@ -45,9 +45,34 @@ const mostBlogs = (blogs) => {
     return null;
 };
 
+const mostLikes = (blogs) => {
+    if (blogs?.length) {
+        if (blogs.length === 1) {
+            return { author: blogs[0].author, likes: blogs[0].likes };
+        }
+
+        const grouped = _.groupBy(blogs, 'author');
+        let author = '';
+        let count = 0;
+
+        for (const key in grouped) {
+            const likesCount = _.sumBy(grouped[key], 'likes');
+            if (likesCount > count) {
+                count = likesCount;
+                author = key;
+            }
+        }
+
+        return { author: author, likes: count };
+    }
+
+    return null;
+};
+
 module.exports = {
     dummy,
     totalLikes,
     favoriteBlog,
-    mostBlogs
+    mostBlogs,
+    mostLikes
 };
