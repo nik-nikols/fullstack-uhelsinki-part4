@@ -1,5 +1,0 @@
-{
-    "env": {
-        "MONGODB_URI": "mongodb+srv://nikyarunindev:sOz40nJy8lANmTJg@cluster0.vgo8niq.mongodb.net/blogsApp?retryWrites=true&w=majority"
-    }
-}
