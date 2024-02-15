@@ -28,6 +28,27 @@ test('blog unique identifier is defined as id', async () => {
     expect(firstBlog.id).toBeDefined();
 });
 
+test('a valid blog can be added', async () => {
+    const newBlog = {
+        title: 'New Blog added by api test',
+        author: 'Author New',
+        url: 'http://tempuri.org/blog#new',
+        likes: 30
+    };
+
+    await api
+        .post('/api/blogs')
+        .send(newBlog)
+        .expect(201)
+        .expect('Content-Type', /application\/json/);
+
+    const blogsAtEnd = await helper.blogsInDb();
+    const conttents = blogsAtEnd.map(blog => blog.title);
+
+    expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length + 1);
+    expect(conttents).toContain('New Blog added by api test');
+});
+
 afterAll(async () => {
     await mongoose.connection.close();
 });
