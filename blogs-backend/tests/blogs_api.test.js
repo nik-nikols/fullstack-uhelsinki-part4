@@ -29,8 +29,9 @@ test('blog unique identifier is defined as id', async () => {
 });
 
 test('a valid blog can be added', async () => {
+    const newTitle = 'New Blog added by api test';
     const newBlog = {
-        title: 'New Blog added by api test',
+        title: newTitle,
         author: 'Author New',
         url: 'http://tempuri.org/blog#new',
         likes: 30
@@ -46,7 +47,27 @@ test('a valid blog can be added', async () => {
     const conttents = blogsAtEnd.map(blog => blog.title);
 
     expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length + 1);
-    expect(conttents).toContain('New Blog added by api test');
+    expect(conttents).toContain(newTitle);
+});
+
+test('likes defaults to 0 if missing in a new blog', async () => {
+    const newTitle = 'New Blog added by api test with missing likes';
+    const newBlog = {
+        title: newTitle,
+        author: 'Author New',
+        url: 'http://tempuri.org/blog#new'
+    };
+
+    await api
+        .post('/api/blogs')
+        .send(newBlog)
+        .expect(201)
+        .expect('Content-Type', /application\/json/);
+
+    const blogsAtEnd = await helper.blogsInDb();
+    const addedBlog = blogsAtEnd.find(blog => blog.title === newTitle);
+
+    expect(addedBlog.likes).toBe(0);
 });
 
 afterAll(async () => {
