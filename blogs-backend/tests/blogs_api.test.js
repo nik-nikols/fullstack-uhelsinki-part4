@@ -70,6 +70,41 @@ test('likes defaults to 0 if missing in a new blog', async () => {
     expect(addedBlog.likes).toBe(0);
 });
 
+test('adding blog with missing title returns 400 status', async () => {
+    const newBlog = {
+        author: 'Author New',
+        url: 'http://tempuri.org/blog#new',
+        likes: 30
+    };
+
+    await api
+        .post('/api/blogs')
+        .send(newBlog)
+        .expect(400);
+
+    const blogsAtEnd = await helper.blogsInDb();
+
+    expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length);
+});
+
+test('adding blog with missing url returns 400 status', async () => {
+    const newTitle = 'New Blog added by api test with missing url';
+    const newBlog = {
+        title: newTitle,
+        author: 'Author New',
+        likes: 40
+    };
+
+    await api
+        .post('/api/blogs')
+        .send(newBlog)
+        .expect(400);
+
+    const blogsAtEnd = await helper.blogsInDb();
+
+    expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length);
+});
+
 afterAll(async () => {
     await mongoose.connection.close();
 });
