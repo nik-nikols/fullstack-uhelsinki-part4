@@ -105,6 +105,20 @@ test('adding blog with missing url returns 400 status', async () => {
     expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length);
 });
 
+test('delete existing blog', async () => {
+    const blogsAtStart = await helper.blogsInDb();
+    const blogToDelete = blogsAtStart[0];
+
+    await api.delete(`/api/blogs/${blogToDelete.id}`)
+        .expect(204);
+
+    const blogsAtEnd = await helper.blogsInDb();
+    expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length - 1);
+
+    const ids = blogsAtEnd.map(blog => blog.id);
+    expect(ids).not.toContain(blogToDelete.id);
+});
+
 afterAll(async () => {
     await mongoose.connection.close();
 });
