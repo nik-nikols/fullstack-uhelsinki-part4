@@ -119,6 +119,45 @@ test('delete existing blog', async () => {
     expect(ids).not.toContain(blogToDelete.id);
 });
 
+test('update existing blog with valid data suceeds', async () => {
+    const updatedLikes = 101;
+    const blogsAtStart = await helper.blogsInDb();
+    const blogToUpdate = blogsAtStart[0];
+    blogToUpdate.likes = updatedLikes;
+
+    const updatedBlog = await api.put(`/api/blogs/${blogToUpdate.id}`)
+        .send(blogToUpdate);
+
+    const blogsAtEnd = await helper.blogsInDb();
+    expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length);
+    expect(updatedBlog.body.likes).toBe(updatedLikes);
+
+    const updatedBlogInDb = blogsAtEnd.find(blog => blog.id === blogToUpdate.id);
+    expect(updatedBlogInDb.likes).toBe(updatedLikes);
+});
+
+test('update existing blog with invalid data fails with status 400', async () => {
+    const blogsAtStart = await helper.blogsInDb();
+    const firstBlog = blogsAtStart[0];
+    const blogToUpdate = {
+        title: null,
+        author: 'My Test Author here',
+        likes: firstBlog.likes + 100,
+        id: firstBlog.id
+    };
+
+    const result = await api.put(`/api/blogs/${firstBlog.id}`)
+        .send(blogToUpdate)
+        .expect(400);
+
+    const blogsAtEnd = await helper.blogsInDb();
+    expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length);
+
+    const blogInDb = blogsAtEnd.find(blog => blog.id === firstBlog.id);
+    expect(blogInDb.author).toBe(firstBlog.author);
+    expect(blogInDb.likes).toBe(firstBlog.likes);
+});
+
 afterAll(async () => {
     await mongoose.connection.close();
 });
