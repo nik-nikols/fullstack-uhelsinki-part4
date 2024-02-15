@@ -14,7 +14,9 @@ beforeEach(async () => {
 });
 
 test('all blogs are returned', async () => {
-    const response = await api.get('/api/blogs');
+    const response = await api.get('/api/blogs')
+        .expect(200)
+        .expect('Content-Type', /application\/json/);
 
     expect(response.body).toHaveLength(helper.initialBlogs.length);
 });
