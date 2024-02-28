@@ -1,20 +1,23 @@
+const { test, describe } = require('node:test');
+const assert = require('node:assert');
+
 const listHelper = require('../utils/list_helper');
 
 test('dummy returns one', () => {
     const blogs = [];
 
     const result = listHelper.dummy(blogs);
-    expect(result).toBe(1);
+    assert.strictEqual(result, 1);
 });
 
 describe('total likes', () => {
     test('of empty list is zero', () => {
-        expect(listHelper.totalLikes([])).toBe(0);
+        assert.strictEqual(listHelper.totalLikes([]), 0);
     });
 
     test('when list has only one blog equals the likes of that', () => {
         const blog = { likes: 10 };
-        expect(listHelper.totalLikes([blog])).toBe(blog.likes);
+        assert.strictEqual(listHelper.totalLikes([blog]), blog.likes);
     });
 
     test('of a bigger list is calculated right', () => {
@@ -22,13 +25,13 @@ describe('total likes', () => {
             { likes: 10 },
             { likes: 7 },
         ];
-        expect(listHelper.totalLikes(blogs)).toBe(17);
+        assert.strictEqual(listHelper.totalLikes(blogs), 17);
     });
 });
 
 describe('favorite blog', () => {
     test('of empty list returns null', () => {
-        expect(listHelper.favoriteBlog([])).toBeNull();
+        assert.equal(listHelper.favoriteBlog([]), null);
     });
 
     test('when list has only one blog equals that', () => {
@@ -38,7 +41,7 @@ describe('favorite blog', () => {
             url: 'url1',
             likes: 10 
         };
-        expect(listHelper.favoriteBlog([blog])).toEqual(blog);
+        assert.deepStrictEqual(listHelper.favoriteBlog([blog]), blog);
     });
 
     test('of a bigger list is calculated right', () => {
@@ -64,13 +67,13 @@ describe('favorite blog', () => {
         };
 
         const blogs = [blog1, blog2, blog3];
-        expect(listHelper.favoriteBlog(blogs)).toEqual(blog3);
+        assert.deepStrictEqual(listHelper.favoriteBlog(blogs), blog3);
     });
 });
 
 describe('most blogs', () => {
     test('of empty list returns null', () => {
-        expect(listHelper.mostBlogs([])).toBeNull();
+        assert.strictEqual(listHelper.mostBlogs([]), null);
     });
 
     test('when list has only one blog equals that author and count 1', () => {
@@ -80,7 +83,7 @@ describe('most blogs', () => {
             url: 'url1',
             likes: 10 
         };
-        expect(listHelper.mostBlogs([blog])).toEqual({ author: blog.author, blogs: 1 });
+        assert.deepStrictEqual(listHelper.mostBlogs([blog]), { author: blog.author, blogs: 1 });
     });
 
     test('of a bigger list is calculated right', () => {
@@ -127,13 +130,13 @@ describe('most blogs', () => {
         };
 
         const blogs = [blog1, blog2, blog3, blog4, blog5, blog6];
-        expect(listHelper.mostBlogs(blogs)).toEqual({ author: 'Author 1', blogs: 3 });
+        assert.deepStrictEqual(listHelper.mostBlogs(blogs), { author: 'Author 1', blogs: 3 });
     });
 });
 
 describe('most likes', () => {
     test('of empty list returns null', () => {
-        expect(listHelper.mostLikes([])).toBeNull();
+        assert.strictEqual(listHelper.mostLikes([]), null);
     });
 
     test('when list has only one blog equals that author and likes', () => {
@@ -143,7 +146,7 @@ describe('most likes', () => {
             url: 'url1',
             likes: 10 
         };
-        expect(listHelper.mostLikes([blog])).toEqual({ author: blog.author, likes: blog.likes });
+        assert.deepStrictEqual(listHelper.mostLikes([blog]), { author: blog.author, likes: blog.likes });
     });
 
     test('of a bigger list is calculated right', () => {
@@ -190,6 +193,6 @@ describe('most likes', () => {
         };
 
         const blogs = [blog1, blog2, blog3, blog4, blog5, blog6];
-        expect(listHelper.mostLikes(blogs)).toEqual({ author: 'Author 3', likes: 56 });
+        assert.deepStrictEqual(listHelper.mostLikes(blogs), { author: 'Author 3', likes: 56 });
     });
 });

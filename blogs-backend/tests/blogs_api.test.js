@@ -1,3 +1,6 @@
+const { test, describe, after, beforeEach } = require('node:test');
+const assert = require('node:assert');
+
 const mongoose = require('mongoose');
 const supertest = require('supertest');
 const app = require('../app');
@@ -18,14 +21,14 @@ test('all blogs are returned', async () => {
         .expect(200)
         .expect('Content-Type', /application\/json/);
 
-    expect(response.body).toHaveLength(helper.initialBlogs.length);
+    assert.strictEqual(response.body.length, helper.initialBlogs.length);
 });
 
 test('blog unique identifier is defined as id', async () => {
     const response = await api.get('/api/blogs');
     const firstBlog = response.body[0];
 
-    expect(firstBlog.id).toBeDefined();
+    assert(firstBlog.id);
 });
 
 test('a valid blog can be added', async () => {
@@ -46,8 +49,8 @@ test('a valid blog can be added', async () => {
     const blogsAtEnd = await helper.blogsInDb();
     const conttents = blogsAtEnd.map(blog => blog.title);
 
-    expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length + 1);
-    expect(conttents).toContain(newTitle);
+    assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length + 1);
+    assert(conttents.includes(newTitle));
 });
 
 test('likes defaults to 0 if missing in a new blog', async () => {
@@ -67,7 +70,7 @@ test('likes defaults to 0 if missing in a new blog', async () => {
     const blogsAtEnd = await helper.blogsInDb();
     const addedBlog = blogsAtEnd.find(blog => blog.title === newTitle);
 
-    expect(addedBlog.likes).toBe(0);
+    assert.strictEqual(addedBlog.likes, 0);
 });
 
 test('adding blog with missing title returns 400 status', async () => {
@@ -84,7 +87,7 @@ test('adding blog with missing title returns 400 status', async () => {
 
     const blogsAtEnd = await helper.blogsInDb();
 
-    expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length);
+    assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length);
 });
 
 test('adding blog with missing url returns 400 status', async () => {
@@ -102,7 +105,7 @@ test('adding blog with missing url returns 400 status', async () => {
 
     const blogsAtEnd = await helper.blogsInDb();
 
-    expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length);
+    assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length);
 });
 
 test('delete existing blog', async () => {
@@ -113,10 +116,10 @@ test('delete existing blog', async () => {
         .expect(204);
 
     const blogsAtEnd = await helper.blogsInDb();
-    expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length - 1);
+    assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length - 1);
 
     const ids = blogsAtEnd.map(blog => blog.id);
-    expect(ids).not.toContain(blogToDelete.id);
+    assert(!ids.includes(blogToDelete.id));
 });
 
 test('update existing blog with valid data suceeds', async () => {
@@ -129,11 +132,11 @@ test('update existing blog with valid data suceeds', async () => {
         .send(blogToUpdate);
 
     const blogsAtEnd = await helper.blogsInDb();
-    expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length);
-    expect(updatedBlog.body.likes).toBe(updatedLikes);
+    assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length);
+    assert.strictEqual(updatedBlog.body.likes, updatedLikes);
 
     const updatedBlogInDb = blogsAtEnd.find(blog => blog.id === blogToUpdate.id);
-    expect(updatedBlogInDb.likes).toBe(updatedLikes);
+    assert.strictEqual(updatedBlogInDb.likes, updatedLikes);
 });
 
 test('update existing blog with invalid data fails with status 400', async () => {
@@ -151,14 +154,14 @@ test('update existing blog with invalid data fails with status 400', async () =>
         .expect(400);
 
     const blogsAtEnd = await helper.blogsInDb();
-    expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length);
+    assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length);
 
     const blogInDb = blogsAtEnd.find(blog => blog.id === firstBlog.id);
-    expect(blogInDb.author).toBe(firstBlog.author);
-    expect(blogInDb.likes).toBe(firstBlog.likes);
+    assert.strictEqual(blogInDb.author, firstBlog.author);
+    assert.strictEqual(blogInDb.likes, firstBlog.likes);
 });
 
-afterAll(async () => {
+after(async () => {
     await mongoose.connection.close();
 });
 
