@@ -47,10 +47,10 @@ test('a valid blog can be added', async () => {
         .expect('Content-Type', /application\/json/);
 
     const blogsAtEnd = await helper.blogsInDb();
-    const conttents = blogsAtEnd.map(blog => blog.title);
+    const contents = blogsAtEnd.map(blog => blog.title);
 
     assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length + 1);
-    assert(conttents.includes(newTitle));
+    assert(contents.includes(newTitle));
 });
 
 test('likes defaults to 0 if missing in a new blog', async () => {
