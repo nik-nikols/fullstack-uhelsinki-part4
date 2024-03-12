@@ -1,4 +1,15 @@
+const jwt = require('jsonwebtoken');
 const logger = require('./logger')
+
+
+const getTokenFrom = request => {
+    const authorization = request.get('authorization');
+    if (authorization && authorization.startsWith('Bearer ')) {
+        return authorization.replace('Bearer ', '');
+    }
+
+    return null;
+};
 
 const requestLogger = (request, response, next) => {
     logger.info('Method:', request.method);
@@ -24,13 +35,34 @@ const errorHandler = (error, request, response, next) => {
     else if (error.name === 'MongoServerError' && error.message.includes('E11000 duplicate key error')) {
         return response.status(400).send({ error: 'expected `username` to be unique' });
     }
+    else if (error.name === 'JsonWebTokenError') {
+        response.status(400).send({ error: 'token missing or invalid' });
+    }
 
     next(error);
 }
 
+const tokenAuthentication = (request, response, next) => {
+    logger.info(request.path);
+    if (request.method !== 'GET' && request.path !== '/api/login/') {
+        const decodedToken = jwt.verify(getTokenFrom(request), process.env.SECRET);
+        if (!decodedToken.id) {
+            return response.status(401).json({ error: 'token invalid' });
+        }
+
+        request.user = {
+            username: decodedToken.username,
+            id: decodedToken.id
+        };
+    }
+
+    next();
+};
+
 module.exports = {
     requestLogger,
     unknownEndpoint,
-    errorHandler
+    errorHandler,
+    tokenAuthentication
 }
 

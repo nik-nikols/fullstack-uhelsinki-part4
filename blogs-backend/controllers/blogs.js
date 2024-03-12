@@ -10,9 +10,9 @@ blogsRouter.get('/', async (request, response) => {
 });
 
 blogsRouter.post('/', async (request, response) => {
+    const user = await User.findById(request.user.id);
     const blog = new Blog(request.body);
 
-    const user = await User.findOne({});
     blog.user = user;
 
     const savedBlog = await blog.save();
