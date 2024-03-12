@@ -5,14 +5,48 @@ const mongoose = require('mongoose');
 const supertest = require('supertest');
 const app = require('../app');
 const Blog = require('../models/blog');
+const User = require('../models/user');
 const helper = require('../utils/test_helper');
 
 const api = supertest(app);
 
+const login = async (username) => {
+    const password = `${username} password`;
+    const user = { username, password };
+    const loginResult = await api
+        .post('/api/login')
+        .send(user);
+
+    return loginResult.body;
+};
+
 beforeEach(async () => {
     await Blog.deleteMany({});
-    const blogObjects = helper.initialBlogs.map(blog => new Blog(blog));
-    const promiseArray = blogObjects.map(blog => blog.save());
+    await User.deleteMany({});
+    // Add users
+    let promiseArray = helper.initialUsers.map(async user => {
+        const newUser = {
+            username: user.username,
+            name: user.name,
+            password: `${user.username} password`
+        };
+
+        return await api
+        .post('/api/users')
+        .send(newUser)
+    });
+    await Promise.all(promiseArray);
+
+    // Add blogs
+    const username = helper.initialUsers[0].username;
+    const loginResult = await login(username);
+    promiseArray = helper.initialBlogs.map(async blog => {
+
+        return await api
+        .post('/api/blogs')
+        .set({ Authorization: `Bearer ${loginResult.token}`})
+        .send(blog)
+    });
     await Promise.all(promiseArray);
 });
 
@@ -31,7 +65,7 @@ test('blog unique identifier is defined as id', async () => {
     assert(firstBlog.id);
 });
 
-test('a valid blog can be added', async () => {
+test('a valid blog add fails if token not provided', async () => {
     const newTitle = 'New Blog added by api test';
     const newBlog = {
         title: newTitle,
@@ -42,6 +76,29 @@ test('a valid blog can be added', async () => {
 
     await api
         .post('/api/blogs')
+        .send(newBlog)
+        .expect(401)
+        .expect('Content-Type', /application\/json/);
+
+    const blogsAtEnd = await helper.blogsInDb();
+
+    assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length);
+});
+
+test('a valid blog can be added', async () => {
+    const username = helper.initialUsers[0].username;
+    const loginResult = await login(username);
+    const newTitle = 'New Blog added by api test';
+    const newBlog = {
+        title: newTitle,
+        author: 'Author New',
+        url: 'http://tempuri.org/blog#new',
+        likes: 30
+    };
+
+    await api
+        .post('/api/blogs')
+        .set({ Authorization: `Bearer ${loginResult.token}`})
         .send(newBlog)
         .expect(201)
         .expect('Content-Type', /application\/json/);
@@ -54,6 +111,8 @@ test('a valid blog can be added', async () => {
 });
 
 test('likes defaults to 0 if missing in a new blog', async () => {
+    const username = helper.initialUsers[0].username;
+    const loginResult = await login(username);
     const newTitle = 'New Blog added by api test with missing likes';
     const newBlog = {
         title: newTitle,
@@ -63,6 +122,7 @@ test('likes defaults to 0 if missing in a new blog', async () => {
 
     await api
         .post('/api/blogs')
+        .set({ Authorization: `Bearer ${loginResult.token}`})
         .send(newBlog)
         .expect(201)
         .expect('Content-Type', /application\/json/);
@@ -74,6 +134,8 @@ test('likes defaults to 0 if missing in a new blog', async () => {
 });
 
 test('adding blog with missing title returns 400 status', async () => {
+    const username = helper.initialUsers[0].username;
+    const loginResult = await login(username);
     const newBlog = {
         author: 'Author New',
         url: 'http://tempuri.org/blog#new',
@@ -82,6 +144,7 @@ test('adding blog with missing title returns 400 status', async () => {
 
     await api
         .post('/api/blogs')
+        .set({ Authorization: `Bearer ${loginResult.token}`})
         .send(newBlog)
         .expect(400);
 
@@ -91,6 +154,8 @@ test('adding blog with missing title returns 400 status', async () => {
 });
 
 test('adding blog with missing url returns 400 status', async () => {
+    const username = helper.initialUsers[0].username;
+    const loginResult = await login(username);
     const newTitle = 'New Blog added by api test with missing url';
     const newBlog = {
         title: newTitle,
@@ -100,6 +165,7 @@ test('adding blog with missing url returns 400 status', async () => {
 
     await api
         .post('/api/blogs')
+        .set({ Authorization: `Bearer ${loginResult.token}`})
         .send(newBlog)
         .expect(400);
 
@@ -109,10 +175,14 @@ test('adding blog with missing url returns 400 status', async () => {
 });
 
 test('delete existing blog', async () => {
+    const username = helper.initialUsers[0].username;
+    const loginResult = await login(username);
     const blogsAtStart = await helper.blogsInDb();
     const blogToDelete = blogsAtStart[0];
 
-    await api.delete(`/api/blogs/${blogToDelete.id}`)
+    await api
+        .delete(`/api/blogs/${blogToDelete.id}`)
+        .set({ Authorization: `Bearer ${loginResult.token}`})
         .expect(204);
 
     const blogsAtEnd = await helper.blogsInDb();
@@ -120,6 +190,24 @@ test('delete existing blog', async () => {
 
     const ids = blogsAtEnd.map(blog => blog.id);
     assert(!ids.includes(blogToDelete.id));
+});
+
+test('delete existing blog that belongs to other user fails with status 403', async () => {
+    const username = helper.initialUsers[1].username;
+    const loginResult = await login(username);
+    const blogsAtStart = await helper.blogsInDb();
+    const blogToDelete = blogsAtStart[0];
+
+    await api
+        .delete(`/api/blogs/${blogToDelete.id}`)
+        .set({ Authorization: `Bearer ${loginResult.token}`})
+        .expect(403);
+
+    const blogsAtEnd = await helper.blogsInDb();
+    assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length);
+
+    const ids = blogsAtEnd.map(blog => blog.id);
+    assert(ids.includes(blogToDelete.id));
 });
 
 test('update existing blog with valid data suceeds', async () => {

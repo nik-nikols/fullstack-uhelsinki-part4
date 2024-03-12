@@ -27,6 +27,11 @@ const initialUsers = [
         username: 'testuser',
         name: 'Test User',
         passwordHash: 'test password'
+    },
+    {
+        username: 'testuser2',
+        name: 'Test User 2',
+        passwordHash: 'test 2 password'
     }
 ];
 
